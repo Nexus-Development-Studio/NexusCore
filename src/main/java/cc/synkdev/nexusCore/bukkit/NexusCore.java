@@ -4,9 +4,9 @@ import cc.synkdev.nexusCore.bukkit.commands.NcCmd;
 import cc.synkdev.nexusCore.bukkit.commands.ReportCmd;
 import cc.synkdev.nexusCore.bukkit.objects.AnalyticsReport;
 import cc.synkdev.nexusCore.components.NexusPlugin;
+import cc.synkdev.nexusCore.components.folia.NexusScheduler;
 import cc.synkdev.nexusCore.components.folia.Platform;
 import cc.synkdev.nexusCore.components.PluginUpdate;
-import cc.synkdev.nexusCore.components.folia.Scheduler;
 import co.aikar.commands.BukkitCommandManager;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,15 +16,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.function.Consumer;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public final class NexusCore extends JavaPlugin implements NexusPlugin {
@@ -70,64 +67,34 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
         pcm.registerCommand(new ReportCmd(this));
         pcm.registerCommand(new NcCmd(this));
 
-        if (Platform.isFolia()) {
-            Scheduler.runRepeating(this, () -> {
-                outdated.clear();
-                outdated.addAll(UpdateChecker.checkOutated());
-                if (!outdated.isEmpty() && doAutoUpdate) UpdateChecker.update(outdated);
-            }, 1L, 60 * 60 * 20L);
+        NexusScheduler.runTaskTimer(this, () -> {
+            outdated.clear();
+            outdated.addAll(UpdateChecker.checkOutated());
+            if (!outdated.isEmpty() && doAutoUpdate) UpdateChecker.update(outdated);
+        }, 1L, 60 * 60 * 20L, true);
 
             /* if (doAnalytics) {
-                Scheduler.runRepeating(this, Analytics::sendReport, 1L, 10 * 60 * 20L);
+                NexusScheduler.runTaskTimer(this, Analytics::sendReport, 1L, 10 * 60 * 20L);
             }*/
 
-            Scheduler.runTaskLater(this, () -> {
-                Utils.log("&b──────────────────────────────────────────────────&r", false);
-                Utils.log("&f  _   _  &b ____   &1 ____  &r", false);
-                Utils.log("&f | \\ | | &b|  _ \\  &1/ ___| &r", false);
-                Utils.log("&f |  \\| | &b| | | | &1\\___ \\ &r", false);
-                Utils.log("&f | |\\  | &b| |_| | &1 ___) |&r", false);
-                Utils.log("&f |_| \\_| &b|____/  &1|____/ &r", false);
-                Utils.log("&f         &b        &1       &r", false);
-                Utils.log("&b──────────────────────────────────────────────────&r", false);
-                Utils.log("&b NexusCore v" + ver() + "&r", false);
-                Utils.log("&b Running on " + Bukkit.getServer().getBukkitVersion(), false);
-                Utils.log("&b NDS | Nexus Development Studios &r", false);
-                Utils.log("&b You are currently using &e" + getPlugins().size() + " &bof our plugins" + (getPlugins().isEmpty() ? "" : ": &e" + String.join(", ", getPlugins())), false);
-                Utils.log("&b Note: This plugin and all of the ones listed above have an auto update feature. Visit the NexusCore config to disable it.", false);
-                Utils.log("&b Visit our Discord for support: https://discord.gg/KxPE2bK5Bu", false);
-                Utils.log("&b──────────────────────────────────────────────────&r", false);
-            }, 30L);
-        } else {
-            Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-                outdated.clear();
-                outdated.addAll(UpdateChecker.checkOutated());
-                if (!outdated.isEmpty() && doAutoUpdate) UpdateChecker.update(outdated);
-            }, 0L, 60 * 60 * 20L);
+        NexusScheduler.runTaskLater(this, () -> {
+            Utils.log("&b──────────────────────────────────────────────────&r", false);
+            Utils.log("&f  _   _  &b ____   &1 ____  &r", false);
+            Utils.log("&f | \\ | | &b|  _ \\  &1/ ___| &r", false);
+            Utils.log("&f |  \\| | &b| | | | &1\\___ \\ &r", false);
+            Utils.log("&f | |\\  | &b| |_| | &1 ___) |&r", false);
+            Utils.log("&f |_| \\_| &b|____/  &1|____/ &r", false);
+            Utils.log("&f         &b        &1       &r", false);
+            Utils.log("&b──────────────────────────────────────────────────&r", false);
+            Utils.log("&b NexusCore v" + ver() + "&r", false);
+            Utils.log("&b Running on " + Bukkit.getServer().getBukkitVersion(), false);
+            Utils.log("&b NDS | Nexus Development Studios &r", false);
+            Utils.log("&b You are currently using &e" + getPlugins().size() + " &bof our plugins" + (getPlugins().isEmpty() ? "" : ": &e" + String.join(", ", getPlugins())), false);
+            Utils.log("&b Note: This plugin and all of the ones listed above have an auto update feature. Visit the NexusCore config to disable it.", false);
+            Utils.log("&b Visit our Discord for support: https://discord.gg/KxPE2bK5Bu", false);
+            Utils.log("&b──────────────────────────────────────────────────&r", false);
+        }, 30L, true);
 
-            /* if (doAnalytics) {
-                Bukkit.getScheduler().runTaskTimerAsynchronously(this, Analytics::sendReport, 0L, 10 * 60 * 20L);
-            }*/
-
-
-            Bukkit.getScheduler().runTaskLater(this, () -> {
-                Utils.log("&b──────────────────────────────────────────────────&r", false);
-                Utils.log("&f  _   _  &b ____   &1 ____  &r", false);
-                Utils.log("&f | \\ | | &b|  _ \\  &1/ ___| &r", false);
-                Utils.log("&f |  \\| | &b| | | | &1\\___ \\ &r", false);
-                Utils.log("&f | |\\  | &b| |_| | &1 ___) |&r", false);
-                Utils.log("&f |_| \\_| &b|____/  &1|____/ &r", false);
-                Utils.log("&f         &b        &1       &r", false);
-                Utils.log("&b──────────────────────────────────────────────────&r", false);
-                Utils.log("&b NexusCore v" + ver() + "&r", false);
-                Utils.log("&b Running on " + Bukkit.getServer().getBukkitVersion(), false);
-                Utils.log("&b NDS | Nexus Development Studios &r", false);
-                Utils.log("&b You are currently using &e" + getPlugins().size() + " &bof our plugins" + (getPlugins().isEmpty() ? "" : ": &e" + String.join(", ", getPlugins())), false);
-                Utils.log("&b Note: This plugin and all of the ones listed above have an auto update feature. Visit the NexusCore config to disable it.", false);
-                Utils.log("&b Visit our Discord for support: https://discord.gg/KxPE2bK5Bu", false);
-                Utils.log("&b──────────────────────────────────────────────────&r", false);
-            }, 30L);
-        }
     }
 
     public void loadConfig() {

@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-public final class Scheduler {
+public final class NexusScheduler {
 
     private static final boolean FOLIA;
     private static Method foliaRunRepeating;
@@ -55,12 +55,21 @@ public final class Scheduler {
         }
     }
 
-
-    public static void runRepeating(
+    public static void runTaskTimer(
             Plugin plugin,
             Runnable task,
             long delay,
             long period
+    ) {
+       runTaskTimer(plugin, task, delay, period, false);
+    }
+
+    public static void runTaskTimer(
+            Plugin plugin,
+            Runnable task,
+            long delay,
+            long period,
+            boolean async
     ) {
         if (FOLIA) {
             try {
@@ -85,12 +94,21 @@ public final class Scheduler {
                 e.printStackTrace();
             }
         } else {
-            Bukkit.getScheduler().runTaskTimer(
-                    plugin,
-                    task,
-                    delay,
-                    period
-            );
+            if (async) {
+                Bukkit.getScheduler().runTaskTimerAsynchronously(
+                        plugin,
+                        task,
+                        delay,
+                        period
+                );
+            } else {
+                Bukkit.getScheduler().runTaskTimer(
+                        plugin,
+                        task,
+                        delay,
+                        period
+                );
+            }
         }
     }
 
@@ -99,6 +117,15 @@ public final class Scheduler {
             Plugin plugin,
             Runnable task,
             long delay
+    ) {
+        runTaskLater(plugin, task, delay, false);
+    }
+
+    public static void runTaskLater(
+            Plugin plugin,
+            Runnable task,
+            long delay,
+            boolean async
     ) {
         if (FOLIA) {
             try {
@@ -119,11 +146,19 @@ public final class Scheduler {
                 e.printStackTrace();
             }
         } else {
-            Bukkit.getScheduler().runTaskLater(
-                    plugin,
-                    task,
-                    delay
-            );
+            if (async) {
+                Bukkit.getScheduler().runTaskLaterAsynchronously(
+                        plugin,
+                        task,
+                        delay
+                );
+            } else {
+                Bukkit.getScheduler().runTaskLater(
+                        plugin,
+                        task,
+                        delay
+                );
+            }
         }
     }
 }
