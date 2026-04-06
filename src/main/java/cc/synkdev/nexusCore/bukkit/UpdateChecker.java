@@ -1,6 +1,6 @@
 package cc.synkdev.nexusCore.bukkit;
 
-import cc.synkdev.nexusCore.components.PluginUpdate;
+import cc.synkdev.nexusCore.bukkit.objects.PluginData;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.Plugin;
@@ -12,6 +12,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class UpdateChecker {
     private static final NexusCore core = NexusCore.getInstance();
@@ -34,7 +37,8 @@ public class UpdateChecker {
             throw new RuntimeException(e);
         }
     }
-    public static List<PluginUpdate> checkOutated() {
+
+    public static List<PluginData> checkOutated() {
         NexusCore.setPl(NexusCore.getInstance());
         List<Plugin> synkPlugs = new ArrayList<>();
         core.getPlugins().clear();
@@ -46,61 +50,57 @@ public class UpdateChecker {
             }
         }
 
-        List<PluginUpdate> list = new ArrayList<>();
-        JSONObject obj = readData();
-        for (Plugin pl : synkPlugs) {
-            if (obj.has(pl.getName())) {
-                JSONObject plObj = obj.getJSONObject(pl.getName());
-                String ver = plObj.getString("version");
-                if (!core.versions.getOrDefault(pl.getName(), pl.getDescription().getVersion()).equals(ver)) {
-                    String link = plObj.getString("link");
-                    link = link.isEmpty() ? null : link;
-                    File file = null;
-                    for (File lF : pl.getDataFolder().getParentFile().listFiles()) {
-                        if (file == null) {
-                            if (lF.getName().contains(pl.getName()) && lF.getName().contains(".jar")) {
-                                file = lF;
+        return Utils.getPlugins().stream().filter(pluginData -> pluginData.getVersionCurr() == null || !pluginData.getVersionCurr().equals(pluginData.getVersionNew())).collect(Collectors.toList());
+    }
+    public static void update(List<PluginData> list) {
+        AtomicInteger skipped = new AtomicInteger();
+        for (PluginData pd : list) {
+            AtomicBoolean doUpdate = new AtomicBoolean(true);
+            try {
+                File original = Utils.getFile(pd.getName());
+                if (pd.getDl() == null) continue;
+                if (!pd.getDisabled() && !pd.getJavaVer().isEmpty()) {
+                    pd.getJavaVer().forEach((integer, pluginUpdate) -> {
+                        if (Runtime.version().feature() < integer) {
+                            pd.setVersionNew(pluginUpdate.getNum());
+                            pd.setDl(pluginUpdate.getDl());
+                            if (pd.getVersionNew().equals(pd.getVersionCurr())) {
+                                doUpdate.set(false);
+                                skipped.getAndIncrement();
                             }
                         }
-                    }
-                    String name = pl.getName().equalsIgnoreCase("SynkLibs") ? "NexusCore" : pl.getName();
-                    if (file != null) list.add(new PluginUpdate(ver, name, link, file));
+                    });
                 }
-            }
-        }
-        return list;
-    }
-    public static void update(List<PluginUpdate> list) {
-        for (PluginUpdate pl : list) {
-            try {
-                pl.getCurrent().delete();
-                if (pl.getDl() == null) continue;
-                URL url = new URL(pl.getDl());
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
+                if (doUpdate.get()) {
+                    URL url = new URL(pd.getDl());
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
 
-                if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                    try (InputStream in = conn.getInputStream();
-                         OutputStream out = Files.newOutputStream(new File(pl.getCurrent().getParentFile(), pl.getPlugin() + ".jar").toPath())) {
+                    if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                        try (InputStream in = conn.getInputStream();
+                             OutputStream out = Files.newOutputStream(new File(Utils.getFile(pd.getName()).getParentFile(), pd.getName() + ".jar").toPath())) {
+                            Utils.debug("Downloading " + pd.getName() + " v" + pd.getVersionNew() + " from " + pd.getDl());
 
-                        byte[] buffer = new byte[4096];
-                        int read;
-                        while ((read = in.read(buffer)) != -1) {
-                            out.write(buffer, 0, read);
+                            byte[] buffer = new byte[4096];
+                            int read;
+                            while ((read = in.read(buffer)) != -1) {
+                                out.write(buffer, 0, read);
+                            }
+                            out.flush();
+                            core.versions.put(pd.getName(), pd.getVersionNew());
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
                         }
-                        out.flush();
-                        core.versions.put(pl.getPlugin(), pl.getNum());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
 
+                    }
+                    conn.disconnect();
+                    original.delete();
                 }
-                conn.disconnect();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-        Utils.log(ChatColor.GOLD+"New plugin versions have been downloaded! Restart your server for the changes to apply.");
+        if (skipped.get()<list.size()) Utils.log(ChatColor.GOLD+"New plugin versions have been downloaded! Restart your server for the changes to apply.");
     }
 
 }

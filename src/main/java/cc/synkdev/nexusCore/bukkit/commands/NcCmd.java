@@ -3,6 +3,7 @@ package cc.synkdev.nexusCore.bukkit.commands;
 
 import cc.synkdev.nexusCore.bukkit.Lang;
 import cc.synkdev.nexusCore.bukkit.NexusCore;
+import cc.synkdev.nexusCore.bukkit.UpdateChecker;
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.CommandAlias;
 import co.aikar.commands.annotation.CommandPermission;
@@ -28,6 +29,16 @@ public class NcCmd extends BaseCommand {
     public void onReload(CommandSender sender) {
         core.loadConfig();
         sender.sendMessage(core.prefix()+ ChatColor.GREEN+ Lang.translate("reloaded", core));
+    }
+
+    @Subcommand("checkUpdates")
+    @CommandPermission("nexuscore.command.checkupdates")
+    public void onCheckUpdates(CommandSender sender) {
+        boolean old = core.doAutoUpdate;
+        core.doAutoUpdate = true;
+        UpdateChecker.update(UpdateChecker.checkOutated());
+        core.doAutoUpdate = old;
+        sender.sendMessage(core.prefix()+Lang.translate("checkedUpdate", core));
     }
 
     public static String getPublicIp() {

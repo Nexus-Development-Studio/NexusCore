@@ -3,10 +3,9 @@ package cc.synkdev.nexusCore.bukkit;
 import cc.synkdev.nexusCore.bukkit.commands.NcCmd;
 import cc.synkdev.nexusCore.bukkit.commands.ReportCmd;
 import cc.synkdev.nexusCore.bukkit.objects.AnalyticsReport;
+import cc.synkdev.nexusCore.bukkit.objects.PluginData;
 import cc.synkdev.nexusCore.components.NexusPlugin;
 import cc.synkdev.nexusCore.components.folia.NexusScheduler;
-import cc.synkdev.nexusCore.components.folia.Platform;
-import cc.synkdev.nexusCore.components.PluginUpdate;
 import co.aikar.commands.BukkitCommandManager;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,7 +33,7 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
     public static String lang = "en";
     @Getter @Setter private static Boolean loopReport = false;
     public static Map<String, String> langMap = new HashMap<>();
-    public List<PluginUpdate> outdated = new ArrayList<>();
+    public List<PluginData> outdated = new ArrayList<>();
     public Boolean doAnalytics = true;
     public Boolean doAutoUpdate = true;
     public UUID serverUUID;
@@ -42,6 +41,7 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
     public List<JavaPlugin> pls = new ArrayList<>();
     @Getter @Setter private List<String> plugins = new ArrayList<>();
     public Map<String, String> versions = new HashMap<>();
+    public boolean debug = false;
 
     @Override
     public void onLoad() {
@@ -115,6 +115,7 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
             config = Utils.loadWebConfig("https://synkdev.cc/storage/config-libs.php", configFile);
             lang = config.getString("lang");
             doAutoUpdate = config.getBoolean("autoupdate");
+            debug = config.contains("debug") && config.getBoolean("debug");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -160,7 +161,7 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
 
     @Override
     public String ver() {
-        return "1.11.2";
+        return "1.12";
     }
 
     @Override

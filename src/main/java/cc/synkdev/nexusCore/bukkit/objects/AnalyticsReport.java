@@ -94,7 +94,7 @@ public class AnalyticsReport {
         for (Map.Entry<String, PluginData> entry : synkPlugins.entrySet()) {
             JSONObject o = new JSONObject();
             o.put("name", entry.getKey());
-            o.put("version", entry.getValue().getVersion());
+            o.put("version", entry.getValue().getVersionCurr());
 
             JSONArray cmds = new JSONArray();
             for (Map.Entry<String, Integer> mapEntry : entry.getValue().getCommandUses().entrySet()) {

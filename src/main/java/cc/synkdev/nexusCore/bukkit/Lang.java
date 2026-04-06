@@ -137,6 +137,7 @@ public class Lang {
             }
         } catch (Exception ignored) {
         }
+        if (translatedString.equals("Invalid translation!")) Utils.debug("Invalid translation for key "+key);
         return translatedString;
     }
 

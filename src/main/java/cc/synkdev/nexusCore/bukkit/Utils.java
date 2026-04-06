@@ -1,6 +1,8 @@
 package cc.synkdev.nexusCore.bukkit;
 
+import cc.synkdev.nexusCore.bukkit.objects.PluginData;
 import cc.synkdev.nexusCore.components.NexusPlugin;
+import cc.synkdev.nexusCore.components.PluginUpdate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -9,12 +11,19 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.plugin.Plugin;
+import org.json.JSONObject;
 
 import java.io.*;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Utils implements Listener {
     private final NexusCore core = NexusCore.getInstance();
+    private static final NexusCore sCore = NexusCore.getInstance();
     NexusPlugin spl;
     public Utils(NexusPlugin spl) {
         this.spl = spl;
@@ -89,6 +98,19 @@ public class Utils implements Listener {
         }
     }
 
+    public static File getFile(String pl) {
+        File file = null;
+        for (File lF : sCore.getDataFolder().getParentFile().listFiles()) {
+            if (file == null) {
+                if (lF.getName().contains(pl) && lF.getName().contains(".jar")) {
+                    file = lF;
+                }
+            }
+        }
+        if (file == null) debug("Returning null file for "+pl);
+        return file;
+    }
+
     @EventHandler
     public void join (PlayerJoinEvent event) {
         if (event.getPlayer().isOp()) NexusCore.availableUpdates.forEach((s, s2) -> {
@@ -96,5 +118,67 @@ public class Utils implements Listener {
             p.sendMessage(core.prefix+ChatColor.GOLD+Lang.translate("updateAvailable", s) + " "+s+"!");
             p.sendMessage(core.prefix+ChatColor.GOLD+Lang.translate("downloadHere", s)+": "+s.dlLink());
         });
+    }
+
+    public static Map<String, Plugin> getActivePlugins() {
+        Map<String, Plugin> map = new HashMap<>();
+        sCore.getPlugins().clear();
+        for (Plugin pl : Bukkit.getPluginManager().getPlugins()) {
+            if (pl.getDescription().getAuthors().contains("Synk") || pl.getDescription().getAuthors().contains("Riddles")) {
+                map.put(pl.getName(), pl);
+                if (!sCore.versions.containsKey(pl.getName())) sCore.versions.put(pl.getName(), pl.getDescription().getVersion());
+                sCore.getPlugins().add(pl.getDescription().getName());
+            }
+        }
+        return map;
+    }
+
+    public static List<PluginData> getPlugins() {
+        List<PluginData> list = new ArrayList<>();
+        JSONObject obj = UpdateChecker.readData();
+        List<String> active = new ArrayList<>(getActivePlugins().keySet());
+        for (String s : obj.keySet()) {
+            JSONObject pObj = obj.getJSONObject(s);
+            if (s.equals("SynkLibs")) continue;
+            if (active.stream().anyMatch(plugin -> plugin.equalsIgnoreCase(s))) {
+                Map<Integer, PluginUpdate> javaVer = fetchJavaVer(pObj, s);
+                list.add(new PluginData(s, getActivePlugins().get(s).getDescription().getVersion(), pObj.getString("version"), pObj.getString("link"), javaVer, new HashMap<>(), new HashMap<>(), false));
+            } else {
+                Utils.debug("Plugin detected as disabled/not present "+s);
+                File file = getFile(s);
+                if (file == null) continue;
+                Utils.debug("Plugin detected as disabled and present "+s);
+                Map<Integer, PluginUpdate> javaVer = fetchJavaVer(pObj, s);
+                int curr = Runtime.version().feature();
+                String ver = pObj.getString("version");
+                String dl = pObj.getString("link");
+                for (Integer i : javaVer.keySet()) {
+                    if (curr < i) {
+                        Utils.debug("Lower java version available "+i);
+                        ver = pObj.getJSONObject("advanced").getJSONObject("java").getJSONObject(i.toString()).getString("version");
+                        dl = pObj.getJSONObject("advanced").getJSONObject("java").getJSONObject(i.toString()).getString("link");
+                    }
+                }
+
+
+                list.add(new PluginData(s, null, ver, dl, javaVer, new HashMap<>(), new HashMap<>(), true));
+            }
+        }
+        return list;
+    }
+
+    private static Map<Integer, PluginUpdate> fetchJavaVer(JSONObject obj, String s) {
+        Map<Integer, PluginUpdate> javaVer = new HashMap<>();
+        if (obj.has("advanced") && obj.getJSONObject("advanced").has("java")) {
+            JSONObject javaObj = obj.getJSONObject("advanced").getJSONObject("java");
+            for (String javaNum : javaObj.keySet()) {
+                javaVer.put(Integer.parseInt(javaNum), new PluginUpdate(javaObj.getJSONObject(javaNum).getString("version"), s, javaObj.getJSONObject(javaNum).getString("link"), getFile(s)));
+            }
+        }
+        return javaVer;
+    }
+
+    public static void debug(String s) {
+        if (sCore.debug) log(ChatColor.translateAlternateColorCodes('&', "&8[DEBUG] &e"+s));
     }
 }

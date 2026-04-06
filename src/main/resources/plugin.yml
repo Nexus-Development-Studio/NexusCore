@@ -14,5 +14,8 @@ permissions:
   nexuscore.command.support:
     description: Use the remote support feature
     default: op
+  nexuscore.command.checkupdates:
+    description: Check NDS plugins updates (manually)
+    default: op
 softdepend:
   - RemoteSupportNexus
