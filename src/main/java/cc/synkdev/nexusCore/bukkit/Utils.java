@@ -1,6 +1,8 @@
 package cc.synkdev.nexusCore.bukkit;
 
+import cc.synkdev.nexusCore.bukkit.commands.ReportCmd;
 import cc.synkdev.nexusCore.bukkit.objects.PluginData;
+import cc.synkdev.nexusCore.components.DiscordWebhook;
 import cc.synkdev.nexusCore.components.NexusPlugin;
 import cc.synkdev.nexusCore.components.PluginUpdate;
 import org.bukkit.Bukkit;
@@ -20,6 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 public class Utils implements Listener {
     private final NexusCore core = NexusCore.getInstance();
@@ -160,8 +164,8 @@ public class Utils implements Listener {
                     }
                 }
 
-
-                list.add(new PluginData(s, null, ver, dl, javaVer, new HashMap<>(), new HashMap<>(), true));
+                String currentVersion = getVersionFromJar(file);
+                list.add(new PluginData(s, currentVersion, ver, dl, javaVer, new HashMap<>(), new HashMap<>(), true));
             }
         }
         return list;
@@ -180,5 +184,34 @@ public class Utils implements Listener {
 
     public static void debug(String s) {
         if (sCore.debug) log(ChatColor.translateAlternateColorCodes('&', "&8[DEBUG] &e"+s));
+    }
+
+    private static String getVersionFromJar(File file) {
+        try (JarFile jar = new JarFile(file)) {
+            JarEntry entry = jar.getJarEntry("plugin.yml");
+            if (entry == null) return null;
+            InputStream is = jar.getInputStream(entry);
+            YamlConfiguration yml = YamlConfiguration.loadConfiguration(new InputStreamReader(is));
+            return yml.getString("version");
+        } catch (IOException e) {
+            Utils.debug("Couldn't read version from jar: " + file.getName());
+            return null;
+        }
+    }
+
+    public static void reportError(String s, Exception e) {
+        DiscordWebhook wh = new DiscordWebhook(WebhookUrl.URL);
+        wh.setContent("<@&1498246565704241162>");
+
+        wh.addEmbed(new DiscordWebhook.EmbedObject()
+                .setTitle("Exception detected")
+                .setDescription(s)
+                .addField("Message", e.getMessage(), false)
+                .addField("Dump", "https://synkdev.cc/dump/"+new ReportCmd(sCore).send(), false));
+        try {
+            wh.execute();
+        } catch (IOException exc) {
+            throw new RuntimeException(exc);
+        }
     }
 }

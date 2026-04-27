@@ -97,6 +97,8 @@ $RECYCLE.BIN/
 
 target/
 
+src/main/java/cc/synkdev/nexusCore/bukkit/WebhookUrl.java
+
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup

@@ -75,6 +75,7 @@ public class UpdateChecker {
                     URL url = new URL(pd.getDl());
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("GET");
+                    boolean valid = true;
 
                     if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         try (InputStream in = conn.getInputStream();
@@ -90,11 +91,15 @@ public class UpdateChecker {
                             core.versions.put(pd.getName(), pd.getVersionNew());
                         } catch (IOException e) {
                             throw new RuntimeException(e);
+                        } catch (NullPointerException ee) {
+                            Utils.debug("Aut-updater NPE");
+                            Utils.reportError("Auto-updater NPE", ee);
+                            valid = false;
                         }
 
                     }
                     conn.disconnect();
-                    original.delete();
+                    if (valid) original.delete();
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);

@@ -332,7 +332,13 @@ public class DiscordWebhook {
         }
 
         private String quote(String string) {
-            return "\"" + string + "\"";
+            return "\"" + string
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\n", "\\n")
+                    .replace("\r", "\\r")
+                    .replace("\t", "\\t")
+                    + "\"";
         }
     }
 
