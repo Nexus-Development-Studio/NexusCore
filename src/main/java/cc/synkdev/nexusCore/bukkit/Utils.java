@@ -111,7 +111,9 @@ public class Utils implements Listener {
                 }
             }
         }
-        if (file == null) debug("Returning null file for "+pl);
+        if (file == null) {
+            file = new File(sCore.getDataFolder().getParentFile(), pl+".jar");
+        }
         return file;
     }
 

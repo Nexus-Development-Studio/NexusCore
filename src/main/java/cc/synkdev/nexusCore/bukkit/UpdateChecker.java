@@ -50,15 +50,21 @@ public class UpdateChecker {
             }
         }
 
-        return Utils.getPlugins().stream().filter(pluginData -> pluginData.getVersionCurr() == null || !pluginData.getVersionCurr().equals(pluginData.getVersionNew())).collect(Collectors.toList());
+        return Utils.getPlugins().stream()
+                .filter(pluginData -> core.getPlugins().contains(pluginData.getName()))
+                .filter(pluginData -> !pluginData.getDisabled())
+                .filter(pluginData -> pluginData.getVersionCurr() != null)
+                .filter(pluginData -> !pluginData.getVersionCurr().equals(pluginData.getVersionNew()))
+                .collect(Collectors.toList());
     }
     public static void update(List<PluginData> list) {
-        AtomicInteger skipped = new AtomicInteger();
+        AtomicInteger downloaded = new AtomicInteger();
         for (PluginData pd : list) {
             AtomicBoolean doUpdate = new AtomicBoolean(true);
             try {
                 File original = Utils.getFile(pd.getName());
-                if (pd.getDl() == null) continue;
+                if (pd.getDl() == null || pd.getDl().isBlank()) continue;
+                if (pd.getVersionNew().equals(core.versions.getOrDefault(pd.getName(), ""))) doUpdate.set(false);
                 if (!pd.getDisabled() && !pd.getJavaVer().isEmpty()) {
                     pd.getJavaVer().forEach((integer, pluginUpdate) -> {
                         if (Runtime.version().feature() < integer) {
@@ -66,7 +72,6 @@ public class UpdateChecker {
                             pd.setDl(pluginUpdate.getDl());
                             if (pd.getVersionNew().equals(pd.getVersionCurr())) {
                                 doUpdate.set(false);
-                                skipped.getAndIncrement();
                             }
                         }
                     });
@@ -89,6 +94,7 @@ public class UpdateChecker {
                             }
                             out.flush();
                             core.versions.put(pd.getName(), pd.getVersionNew());
+                            downloaded.getAndIncrement();
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         } catch (NullPointerException ee) {
@@ -99,13 +105,14 @@ public class UpdateChecker {
 
                     }
                     conn.disconnect();
-                    if (valid) original.delete();
+                    File output = new File(Utils.getFile(pd.getName()).getParentFile(), pd.getName() + ".jar");
+                    if (valid && !original.equals(output)) original.delete();
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-        if (skipped.get()<list.size()) Utils.log(ChatColor.GOLD+"New plugin versions have been downloaded! Restart your server for the changes to apply.");
+        if (downloaded.get()>0) Utils.log(ChatColor.GOLD+"New plugin versions have been downloaded! Restart your server for the changes to apply.");
     }
 
 }
