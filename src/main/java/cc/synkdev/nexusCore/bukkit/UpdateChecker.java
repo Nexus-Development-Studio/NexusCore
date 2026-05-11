@@ -1,6 +1,8 @@
 package cc.synkdev.nexusCore.bukkit;
 
 import cc.synkdev.nexusCore.bukkit.objects.PluginData;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.Plugin;
@@ -77,6 +79,10 @@ public class UpdateChecker {
                     });
                 }
                 if (doUpdate.get()) {
+                    if (pd.getPremium()) {
+                        Utils.broadcastUpdate(pd);
+                        continue;
+                    }
                     URL url = new URL(pd.getDl());
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("GET");

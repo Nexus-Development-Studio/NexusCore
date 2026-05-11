@@ -5,6 +5,8 @@ import cc.synkdev.nexusCore.bukkit.objects.PluginData;
 import cc.synkdev.nexusCore.components.DiscordWebhook;
 import cc.synkdev.nexusCore.components.NexusPlugin;
 import cc.synkdev.nexusCore.components.PluginUpdate;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -117,6 +119,18 @@ public class Utils implements Listener {
         return file;
     }
 
+    public static void broadcastUpdate(PluginData pd) {
+        log(Lang.translate("updateAvailableConsole", sCore, pd.getName(), pd.getDl()));
+        TextComponent comp = new TextComponent(sCore.prefix()+Lang.translate("updateAvailablePlayer1", sCore, pd.getName()));
+        TextComponent here = new TextComponent(Lang.translate("here", sCore));
+        here.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, pd.getDl()));
+        comp.addExtra(here);
+        for (Player pl : Bukkit.getOnlinePlayers()) {
+            if (!pl.isOp()) continue;
+            pl.spigot().sendMessage(comp);
+        }
+    }
+
     @EventHandler
     public void join (PlayerJoinEvent event) {
         if (event.getPlayer().isOp()) NexusCore.availableUpdates.forEach((s, s2) -> {
@@ -148,7 +162,7 @@ public class Utils implements Listener {
             if (s.equals("SynkLibs")) continue;
             if (active.stream().anyMatch(plugin -> plugin.equalsIgnoreCase(s))) {
                 Map<Integer, PluginUpdate> javaVer = fetchJavaVer(pObj, s);
-                list.add(new PluginData(s, getActivePlugins().get(s).getDescription().getVersion(), pObj.getString("version"), pObj.getString("link"), javaVer, new HashMap<>(), new HashMap<>(), false));
+                list.add(new PluginData(s, getActivePlugins().get(s).getDescription().getVersion(), pObj.getString("version"), pObj.getString("link"), javaVer, new HashMap<>(), new HashMap<>(), false, pObj.has("premium") && pObj.getBoolean("premium")));
             } else {
                 Utils.debug("Plugin detected as disabled/not present "+s);
                 File file = getFile(s);
@@ -167,7 +181,7 @@ public class Utils implements Listener {
                 }
 
                 String currentVersion = getVersionFromJar(file);
-                list.add(new PluginData(s, currentVersion, ver, dl, javaVer, new HashMap<>(), new HashMap<>(), true));
+                list.add(new PluginData(s, currentVersion, ver, dl, javaVer, new HashMap<>(), new HashMap<>(), true, pObj.has("premium") && pObj.getBoolean("premium")));
             }
         }
         return list;

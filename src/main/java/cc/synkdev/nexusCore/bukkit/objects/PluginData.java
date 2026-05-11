@@ -19,6 +19,7 @@ public class PluginData {
     private Map<String, Integer> commandUses;
     private Map<String, Object> fields;
     private Boolean disabled;
+    private Boolean premium;
     public PluginData(JavaPlugin plugin) {
         this.name = plugin.getDescription().getName();
         this.versionCurr = plugin.getDescription().getVersion();
