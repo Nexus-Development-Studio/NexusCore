@@ -161,7 +161,7 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
 
     @Override
     public String ver() {
-        return "1.12.2";
+        return "2.0";
     }
 
     @Override
