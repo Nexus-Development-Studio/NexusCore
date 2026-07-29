@@ -130,7 +130,7 @@ public class Lang {
         }
     }
     public static String translate(String key, NexusPlugin spl, String... placeholders) {
-        String translatedString = ChatColor.translateAlternateColorCodes('&', spl.langMap().getOrDefault(key, "Invalid translation!"));
+        String translatedString = Utils.color(spl.langMap().getOrDefault(key, "Invalid translation!"));
         try {
             for (int i = 0; i < placeholders.length; i++) {
                 translatedString = translatedString.replace("%s" + (i + 1) + "%", placeholders[i]);

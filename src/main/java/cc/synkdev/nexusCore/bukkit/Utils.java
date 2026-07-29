@@ -5,6 +5,9 @@ import cc.synkdev.nexusCore.bukkit.objects.PluginData;
 import cc.synkdev.nexusCore.components.DiscordWebhook;
 import cc.synkdev.nexusCore.components.NexusPlugin;
 import cc.synkdev.nexusCore.components.PluginUpdate;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -229,5 +232,17 @@ public class Utils implements Listener {
         } catch (IOException exc) {
             throw new RuntimeException(exc);
         }
+    }
+
+    public static String color(String s) {
+        Component comp;
+        if (s.contains("§")) {
+            comp = LegacyComponentSerializer.legacySection().deserialize(s);
+        } else if (s.contains("&")) {
+            comp = LegacyComponentSerializer.legacyAmpersand().deserialize(s);
+        } else {
+            comp = MiniMessage.miniMessage().deserialize(s);
+        }
+        return LegacyComponentSerializer.legacySection().serialize(comp);
     }
 }
