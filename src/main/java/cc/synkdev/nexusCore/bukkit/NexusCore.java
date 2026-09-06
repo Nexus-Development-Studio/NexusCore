@@ -7,6 +7,9 @@ import cc.synkdev.nexusCore.bukkit.objects.PluginData;
 import cc.synkdev.nexusCore.components.NexusPlugin;
 import cc.synkdev.nexusCore.components.folia.NexusScheduler;
 import co.aikar.commands.BukkitCommandManager;
+import dev.faststats.ErrorTracker;
+import dev.faststats.bukkit.BukkitContext;
+import dev.faststats.data.Metric;
 import lombok.Getter;
 import lombok.Setter;
 import org.bstats.bukkit.Metrics;
@@ -43,6 +46,9 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
     public Map<String, String> versions = new HashMap<>();
     public boolean debug = false;
 
+    public static final ErrorTracker ERROR_TRACKER = ErrorTracker.contextAware();
+    private BukkitContext context;
+
     @Override
     public void onLoad() {
         instance = this;
@@ -72,6 +78,15 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
             outdated.addAll(UpdateChecker.checkOutated());
             if (!outdated.isEmpty() && doAutoUpdate) UpdateChecker.update(outdated);
         }, 1L, 60 * 60 * 20L, true);
+
+        context = new BukkitContext.Factory(this, "172604b0e1a3e0f025d351a50261f4ae")
+                .errorTrackerService(ERROR_TRACKER)
+                .metrics(factory -> factory.addMetric(Metric.bool("autoupdate", () -> doAutoUpdate))
+                        .addMetric(Metric.string("lang", () -> config.getString("lang", "en")))
+                        .addMetric(Metric.stringArray("nexus_plugins", () -> getPlugins().toArray(new String[0])))
+                        .create())
+                .create();
+        context.ready();
 
             /* if (doAnalytics) {
                 NexusScheduler.runTaskTimer(this, Analytics::sendReport, 1L, 10 * 60 * 20L);
@@ -151,6 +166,7 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
 
     @Override
     public void onDisable() {
+        context.shutdown();
         Analytics.sendReport();
     }
 
@@ -161,7 +177,7 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
 
     @Override
     public String ver() {
-        return "2.2";
+        return "2.1.2";
     }
 
     @Override

@@ -6,7 +6,7 @@
 
     <groupId>cc.synkdev</groupId>
     <artifactId>NexusCore</artifactId>
-    <version>2.1.1</version>
+    <version>2.1.2</version>
     <packaging>jar</packaging>
 
     <name>NexusCore</name>
@@ -44,6 +44,10 @@
                         <relocation>
                             <pattern>org.bstats</pattern>
                             <shadedPattern>cc.synkdev.bstats</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>dev.faststats</pattern>
+                            <shadedPattern>cc.synkdev.faststats</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>cc.synkdev.gui</pattern>
@@ -110,6 +114,10 @@
             <id>mvn-wesjd-net</id>
             <url>https://mvn.wesjd.net/</url>
         </repository>
+        <repository>
+            <id>faststats-releases</id>
+            <url>https://repo.faststats.dev/releases</url>
+        </repository>
     </repositories>
 
     <dependencyManagement>
@@ -158,13 +166,6 @@
         </dependency>
 
         <dependency>
-            <groupId>dev.folia</groupId>
-            <artifactId>folia-api</artifactId>
-            <version>1.21.8-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
             <groupId>cc.synkdev.gui</groupId>
             <artifactId>NexusGUI</artifactId>
             <version>1.0</version>
@@ -199,5 +200,10 @@
             <version>4.4.1</version>
         </dependency>
 
+        <dependency>
+            <groupId>dev.faststats.metrics</groupId>
+            <artifactId>bukkit</artifactId>
+            <version>0.30.1</version>
+        </dependency>
     </dependencies>
 </project>
