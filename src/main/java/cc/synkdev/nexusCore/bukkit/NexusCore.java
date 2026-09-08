@@ -2,7 +2,6 @@ package cc.synkdev.nexusCore.bukkit;
 
 import cc.synkdev.nexusCore.bukkit.commands.NcCmd;
 import cc.synkdev.nexusCore.bukkit.commands.ReportCmd;
-import cc.synkdev.nexusCore.bukkit.objects.AnalyticsReport;
 import cc.synkdev.nexusCore.bukkit.objects.PluginData;
 import cc.synkdev.nexusCore.components.NexusPlugin;
 import cc.synkdev.nexusCore.components.folia.NexusScheduler;
@@ -40,14 +39,12 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
     public Boolean doAnalytics = true;
     public Boolean doAutoUpdate = true;
     public UUID serverUUID;
-    public AnalyticsReport report;
-    public List<JavaPlugin> pls = new ArrayList<>();
     @Getter @Setter private List<String> plugins = new ArrayList<>();
     public Map<String, String> versions = new HashMap<>();
     public boolean debug = false;
 
     public static final ErrorTracker ERROR_TRACKER = ErrorTracker.contextAware();
-    private BukkitContext context;
+    public BukkitContext context;
 
     @Override
     public void onLoad() {
@@ -58,7 +55,6 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
     @Override
     public void onEnable() {
         loadConfig();
-        loadAnalytics();
 
         langMap.clear();
         langMap.putAll(Lang.init(this, new File(getDataFolder(), "lang.json")));
@@ -87,10 +83,6 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
                         .create())
                 .create();
         context.ready();
-
-            /* if (doAnalytics) {
-                NexusScheduler.runTaskTimer(this, Analytics::sendReport, 1L, 10 * 60 * 20L);
-            }*/
 
         NexusScheduler.runTaskLater(this, () -> {
             Utils.log("&b──────────────────────────────────────────────────&r", false);
@@ -136,38 +128,10 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
         }
     }
 
-    public void loadAnalytics() {
-        File analyticsFile = new File(getDataFolder(), "analytics.yml");
-
-        try {
-            if (!analyticsFile.exists()) {
-                Files.copy(getResource("analytics.yml"), analyticsFile.toPath());
-            }
-            YamlConfiguration analyticsConfig = YamlConfiguration.loadConfiguration(analyticsFile);
-            doAnalytics = analyticsConfig.getBoolean("agree");
-            String uuid = analyticsConfig.getString("uuid");
-            UUID uid;
-            boolean changed = false;
-            try {
-                uid = UUID.fromString(uuid);
-            } catch (IllegalArgumentException e) {
-                uid = UUID.randomUUID();
-                changed = true;
-            }
-            serverUUID = uid;
-            if (changed) {
-                analyticsConfig.set("uuid", serverUUID.toString());
-                analyticsConfig.save(analyticsFile);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @Override
     public void onDisable() {
         context.shutdown();
-        Analytics.sendReport();
     }
 
     @Override
@@ -177,7 +141,7 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
 
     @Override
     public String ver() {
-        return "2.1.2";
+        return "2.1.3";
     }
 
     @Override

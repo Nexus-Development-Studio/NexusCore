@@ -104,15 +104,23 @@ public class UpdateChecker {
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         } catch (NullPointerException ee) {
-                            Utils.debug("Aut-updater NPE");
-                            Utils.reportError("Auto-updater NPE", ee);
+                            Utils.debug("Auto-updater NPE");
+                            core.context.errorTrackerService().get().globalErrorTracker().trackError(ee);
                             valid = false;
                         }
 
                     }
                     conn.disconnect();
                     File output = new File(Utils.getFile(pd.getName()).getParentFile(), pd.getName() + ".jar");
-                    if (valid && !original.equals(output)) original.delete();
+                    if (valid && !original.getName().equals(output.getName())) {
+                        boolean deleted = original.delete();
+                        if (deleted) {
+                            Utils.log("Deleted original " + original.getName());
+                        } else {
+                            Utils.log(ChatColor.YELLOW + "Could not delete " + original.getName() + " (likely still in use), scheduling delete on exit");
+                            original.deleteOnExit();
+                        }
+                    }
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);

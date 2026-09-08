@@ -110,13 +110,14 @@ public class Utils implements Listener {
     public static File getFile(String pl) {
         File file = null;
         for (File lF : sCore.getDataFolder().getParentFile().listFiles()) {
-            if (file == null) {
-                if (lF.getName().contains(pl) && lF.getName().contains(".jar")) {
-                    file = lF;
-                }
+            if (lF.getName().contains(pl) && lF.getName().contains(".jar")) {
+                log("Found file for "+pl+": "+lF.getName());
+                file = lF;
+                break;
             }
         }
         if (file == null) {
+            log("Found no file for "+pl+", using default: "+pl+".jar");
             file = new File(sCore.getDataFolder().getParentFile(), pl+".jar");
         }
         return file;
@@ -136,7 +137,7 @@ public class Utils implements Listener {
 
     @EventHandler
     public void join (PlayerJoinEvent event) {
-        if (event.getPlayer().isOp()) NexusCore.availableUpdates.forEach((s, s2) -> {
+        if (event.getPlayer().isOp()) NexusCore.availableUpdates.forEach((s, _) -> {
             Player p = event.getPlayer();
             p.sendMessage(core.prefix+ChatColor.GOLD+Lang.translate("updateAvailable", s) + " "+s+"!");
             p.sendMessage(core.prefix+ChatColor.GOLD+Lang.translate("downloadHere", s)+": "+s.dlLink());
@@ -169,7 +170,6 @@ public class Utils implements Listener {
             } else {
                 Utils.debug("Plugin detected as disabled/not present "+s);
                 File file = getFile(s);
-                if (file == null) continue;
                 Utils.debug("Plugin detected as disabled and present "+s);
                 Map<Integer, PluginUpdate> javaVer = fetchJavaVer(pObj, s);
                 int curr = Runtime.version().feature();
@@ -215,22 +215,6 @@ public class Utils implements Listener {
         } catch (IOException e) {
             Utils.debug("Couldn't read version from jar: " + file.getName());
             return null;
-        }
-    }
-
-    public static void reportError(String s, Exception e) {
-        DiscordWebhook wh = new DiscordWebhook(WebhookUrl.URL);
-        wh.setContent("<@&1498246565704241162>");
-
-        wh.addEmbed(new DiscordWebhook.EmbedObject()
-                .setTitle("Exception detected")
-                .setDescription(s)
-                .addField("Message", e.getMessage(), false)
-                .addField("Dump", "https://synkdev.cc/dump/"+new ReportCmd(sCore).send(), false));
-        try {
-            wh.execute();
-        } catch (IOException exc) {
-            throw new RuntimeException(exc);
         }
     }
 
