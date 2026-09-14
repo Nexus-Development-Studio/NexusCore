@@ -114,9 +114,7 @@ public class UpdateChecker {
                     File output = new File(Utils.getFile(pd.getName()).getParentFile(), pd.getName() + ".jar");
                     if (valid && !original.getName().equals(output.getName())) {
                         boolean deleted = original.delete();
-                        if (deleted) {
-                            Utils.log("Deleted original " + original.getName());
-                        } else {
+                        if (!deleted) {
                             Utils.log(ChatColor.YELLOW + "Could not delete " + original.getName() + " (likely still in use), scheduling delete on exit");
                             original.deleteOnExit();
                         }

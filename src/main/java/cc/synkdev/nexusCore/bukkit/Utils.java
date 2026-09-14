@@ -111,13 +111,11 @@ public class Utils implements Listener {
         File file = null;
         for (File lF : sCore.getDataFolder().getParentFile().listFiles()) {
             if (lF.getName().contains(pl) && lF.getName().contains(".jar")) {
-                log("Found file for "+pl+": "+lF.getName());
                 file = lF;
                 break;
             }
         }
         if (file == null) {
-            log("Found no file for "+pl+", using default: "+pl+".jar");
             file = new File(sCore.getDataFolder().getParentFile(), pl+".jar");
         }
         return file;
