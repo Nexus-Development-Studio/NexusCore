@@ -40,7 +40,7 @@ public class ReportCmd extends BaseCommand {
     if (uuid != null) {
             TextComponent comp = new TextComponent(core.prefix() + ChatColor.GREEN + "Your report has been exported!\n"+core.prefix()+ChatColor.GREEN+"Please save this link somewhere as it will be used by the support team: " + ChatColor.GOLD);
             TextComponent uuidComp = new TextComponent(ChatColor.GOLD+"https://synkdev.cc/dump/"+uuid);
-            comp.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, uuid));
+            comp.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://synkdev.cc/dump/"+uuid));
             comp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("Click to copy or open it")}));
             comp.addExtra(uuidComp);
 
