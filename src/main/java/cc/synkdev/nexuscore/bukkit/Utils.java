@@ -1,10 +1,8 @@
-package cc.synkdev.nexusCore.bukkit;
+package cc.synkdev.nexuscore.bukkit;
 
-import cc.synkdev.nexusCore.bukkit.commands.ReportCmd;
-import cc.synkdev.nexusCore.bukkit.objects.PluginData;
-import cc.synkdev.nexusCore.components.DiscordWebhook;
-import cc.synkdev.nexusCore.components.NexusPlugin;
-import cc.synkdev.nexusCore.components.PluginUpdate;
+import cc.synkdev.nexuscore.bukkit.objects.PluginData;
+import cc.synkdev.nexuscore.components.NexusPlugin;
+import cc.synkdev.nexuscore.components.PluginUpdate;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -22,18 +20,17 @@ import org.bukkit.plugin.Plugin;
 import org.json.JSONObject;
 
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Files;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class Utils implements Listener {
     private final NexusCore core = NexusCore.getInstance();
     private static final NexusCore sCore = NexusCore.getInstance();
-    NexusPlugin spl;
+    final NexusPlugin spl;
     public Utils(NexusPlugin spl) {
         this.spl = spl;
     }
@@ -48,8 +45,9 @@ public class Utils implements Listener {
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);
         File temp = new File(file.getParentFile(), "temp-"+System.currentTimeMillis()+".yml");
         try {
-            URL uri = new URL(url);
-            if (!temp.exists()) temp.createNewFile();
+            URL uri = URI.create(url).toURL();
+            if (!temp.exists() && !temp.createNewFile()) throw new IOException("Failed to create temp file!");
+
             BufferedReader reader = new BufferedReader(new InputStreamReader(uri.openStream()));
 
             BufferedWriter writer = new BufferedWriter(new FileWriter(temp));
@@ -88,7 +86,7 @@ public class Utils implements Listener {
 
             copyFile(temp, file);
 
-            temp.delete();
+            Files.delete(temp.toPath());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -109,7 +107,7 @@ public class Utils implements Listener {
 
     public static File getFile(String pl) {
         File file = null;
-        for (File lF : sCore.getDataFolder().getParentFile().listFiles()) {
+        for (File lF : Objects.requireNonNull(sCore.getDataFolder().getParentFile().listFiles())) {
             if (lF.getName().contains(pl) && lF.getName().contains(".jar")) {
                 file = lF;
                 break;
@@ -210,7 +208,7 @@ public class Utils implements Listener {
             InputStream is = jar.getInputStream(entry);
             YamlConfiguration yml = YamlConfiguration.loadConfiguration(new InputStreamReader(is));
             return yml.getString("version");
-        } catch (IOException e) {
+        } catch (IOException _) {
             Utils.debug("Couldn't read version from jar: " + file.getName());
             return null;
         }

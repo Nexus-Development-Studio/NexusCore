@@ -1,4 +1,4 @@
-package cc.synkdev.nexusCore.components.folia;
+package cc.synkdev.nexuscore.components.folia;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -9,6 +9,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public final class NexusScheduler {
+    private NexusScheduler() {
+        /* This utility class should not be instantiated */
+    }
+
 
     private static final boolean FOLIA;
     private static Method foliaRunRepeating;
@@ -21,7 +25,7 @@ public final class NexusScheduler {
         try {
             Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
             folia = true;
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException _) {
             folia = false;
         }
         FOLIA = folia;
@@ -91,7 +95,7 @@ public final class NexusScheduler {
                 ACTIVE_TASKS.add(scheduledTask);
 
             } catch (ReflectiveOperationException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         } else {
             if (async) {
@@ -143,7 +147,7 @@ public final class NexusScheduler {
                 );
 
             } catch (ReflectiveOperationException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         } else {
             if (async) {

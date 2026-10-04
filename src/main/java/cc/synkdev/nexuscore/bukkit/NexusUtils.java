@@ -1,6 +1,6 @@
-package cc.synkdev.nexusCore.bukkit;
+package cc.synkdev.nexuscore.bukkit;
 
-import cc.synkdev.nexusCore.components.NexusPlugin;
+import cc.synkdev.nexuscore.components.NexusPlugin;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -10,8 +10,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 
 public class NexusUtils {
+    private NexusUtils() {
+        /* This utility class should not be instantiated */
+    }
+
     //New class for subplugins methods
     public static void initLang(NexusPlugin plugin, Map<String, String> langMap, String lang) {
         langMap.clear();
@@ -20,19 +25,26 @@ public class NexusUtils {
 
     public static YamlConfiguration updateConfig(Plugin plugin, String... skipKeys) {
         YamlConfiguration config;
-        if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdirs();
+        if (!plugin.getDataFolder().exists() && !plugin.getDataFolder().mkdirs()) {
+            try {
+                throw new IOException("Failed to create plugin data folder!");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         File configFile = new File(plugin.getDataFolder(), "config.yml");
         try {
             if (!configFile.exists()) {
                 try {
-                    Files.copy(plugin.getResource("config.yml"), configFile.toPath());
+                    Files.copy(Objects.requireNonNull(plugin.getResource("config.yml")), configFile.toPath());
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             } else {
                 File temp = new File(plugin.getDataFolder(), "temp-config-"+System.currentTimeMillis()+".yml");
                 try {
-                    Files.copy(plugin.getResource("config.yml"), temp.toPath());
+                    Files.copy(Objects.requireNonNull(plugin.getResource("config.yml")), temp.toPath());
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -50,7 +62,7 @@ public class NexusUtils {
                     config.save(configFile);
                 }
 
-                temp.delete();
+                Files.delete(temp.toPath());
             }
             return YamlConfiguration.loadConfiguration(configFile);
         } catch (IOException e) {

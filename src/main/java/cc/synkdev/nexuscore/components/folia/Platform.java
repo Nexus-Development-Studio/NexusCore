@@ -1,6 +1,10 @@
-package cc.synkdev.nexusCore.components.folia;
+package cc.synkdev.nexuscore.components.folia;
 
 public final class Platform {
+    private Platform() {
+        /* This utility class should not be instantiated */
+    }
+
     private static final boolean FOLIA;
 
     static {
@@ -8,7 +12,7 @@ public final class Platform {
         try {
             Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
             folia = true;
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException _) {
             folia = false;
         }
         FOLIA = folia;

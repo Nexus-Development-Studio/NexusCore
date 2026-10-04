@@ -1,8 +1,6 @@
-package cc.synkdev.nexusCore.bukkit;
+package cc.synkdev.nexuscore.bukkit;
 
-import cc.synkdev.nexusCore.bukkit.objects.PluginData;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.TextComponent;
+import cc.synkdev.nexuscore.bukkit.objects.PluginData;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.Plugin;
@@ -10,19 +8,23 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 public class UpdateChecker {
+    private UpdateChecker() {
+        /* This utility class should not be instantiated */
+    }
+
     private static final NexusCore core = NexusCore.getInstance();
     public static JSONObject readData() {
         try {
-            URL url = new URL("https://synkdev.cc/storage/versions.json");
+            URL url = URI.create("https://synkdev.cc/storage/versions.json").toURL();
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
 
@@ -56,8 +58,9 @@ public class UpdateChecker {
                 .filter(pluginData -> core.getPlugins().contains(pluginData.getName()))
                 .filter(pluginData -> !pluginData.getDisabled())
                 .filter(pluginData -> pluginData.getVersionCurr() != null)
+                .filter(pluginData -> !pluginData.getVersionCurr().endsWith("-DEV"))
                 .filter(pluginData -> !pluginData.getVersionCurr().equals(pluginData.getVersionNew()))
-                .collect(Collectors.toList());
+                .toList();
     }
     public static void update(List<PluginData> list) {
         AtomicInteger downloaded = new AtomicInteger();
@@ -70,8 +73,8 @@ public class UpdateChecker {
                 if (!pd.getDisabled() && !pd.getJavaVer().isEmpty()) {
                     pd.getJavaVer().forEach((integer, pluginUpdate) -> {
                         if (Runtime.version().feature() < integer) {
-                            pd.setVersionNew(pluginUpdate.getNum());
-                            pd.setDl(pluginUpdate.getDl());
+                            pd.setVersionNew(pluginUpdate.num());
+                            pd.setDl(pluginUpdate.dl());
                             if (pd.getVersionNew().equals(pd.getVersionCurr())) {
                                 doUpdate.set(false);
                             }
@@ -83,7 +86,7 @@ public class UpdateChecker {
                         Utils.broadcastUpdate(pd);
                         continue;
                     }
-                    URL url = new URL(pd.getDl());
+                    URL url = URI.create(pd.getDl()).toURL();
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("GET");
                     boolean valid = true;
@@ -105,7 +108,9 @@ public class UpdateChecker {
                             throw new RuntimeException(e);
                         } catch (NullPointerException ee) {
                             Utils.debug("Auto-updater NPE");
-                            core.context.errorTrackerService().get().globalErrorTracker().trackError(ee);
+                            if (core.context.errorTrackerService().isPresent()) {
+                                core.context.errorTrackerService().get().globalErrorTracker().trackError(ee);
+                            }
                             valid = false;
                         }
 

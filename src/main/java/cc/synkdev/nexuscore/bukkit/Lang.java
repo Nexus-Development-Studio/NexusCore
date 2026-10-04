@@ -1,28 +1,27 @@
-package cc.synkdev.nexusCore.bukkit;
+package cc.synkdev.nexuscore.bukkit;
 
-import cc.synkdev.nexusCore.components.NexusPlugin;
+import cc.synkdev.nexuscore.components.NexusPlugin;
 import com.google.gson.Gson;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.json.JSONObject;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class Lang {
-    private static final NexusCore core = NexusCore.getInstance();
-    public static String getToken() {
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new URL("https://synkdev.cc/storage/token-crowdin.php").openStream()));
-            return reader.readLine();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private Lang() {
+        /* This utility class should not be instantiated */
     }
+
     public static Map<String, String> init(NexusPlugin plugin, File langFile) {
-        String globLang = Bukkit.getPluginManager().getPlugin("NexusCore").getConfig().getString("lang", "en");
+        String globLang = Objects.requireNonNull(Bukkit.getPluginManager().getPlugin("NexusCore")).getConfig().getString("lang", "en");
         return init(plugin, langFile, globLang);
     }
 
@@ -33,17 +32,9 @@ public class Lang {
                 try {
                     Map<String, String> curr = load(langFile);
                     File temp = new File(langFile.getParentFile(), "temp-" + System.currentTimeMillis() + ".json");
-                    temp.createNewFile();
+                    if (!temp.createNewFile()) throw new IOException("Failed to create temp file!");
 
-                    BufferedWriter writer = new BufferedWriter(new FileWriter(temp));
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(new URL(plugin.lang().replace("lang-pld", "en")).openStream()));
-
-                    String ln;
-                    while ((ln = reader.readLine()) != null) {
-                        writer.write(ln);
-                        writer.newLine();
-                    }
-                    writer.close();
+                    writeToFile(plugin, temp);
 
                     Map<String, String> tempMap = new HashMap<>(load(temp));
                     for (Map.Entry<String, String> entry : tempMap.entrySet()) {
@@ -51,25 +42,20 @@ public class Lang {
                             curr.put(entry.getKey(), entry.getValue());
                         }
                     }
-                    temp.delete();
+                    Files.delete(temp.toPath());
                     save(langFile, curr);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             } else {
                 try {
-                    if (!langFile.getParentFile().exists()) langFile.getParentFile().mkdirs();
-                    langFile.createNewFile();
+                    if (!langFile.getParentFile().exists() && !langFile.getParentFile().mkdirs()) {
+                            throw new IOException("Failed to create lang folder!");
+                        }
 
-                    BufferedWriter writer = new BufferedWriter(new FileWriter(langFile));
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(new URL(plugin.lang().replace("lang-pld", "en")).openStream()));
+                    if (!langFile.createNewFile()) throw new IOException("Failed to create lang.json file!");
 
-                    String ln;
-                    while ((ln = reader.readLine()) != null) {
-                        writer.write(ln);
-                        writer.newLine();
-                    }
-                    writer.close();
+                    writeToFile(plugin, langFile);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -82,11 +68,12 @@ public class Lang {
             }
             try {
                 File temp = new File(langFile.getParentFile(), "temp-"+System.currentTimeMillis()+".json");
-                if (!temp.getParentFile().exists()) temp.getParentFile().mkdirs();
-                temp.createNewFile();
+                if (!temp.getParentFile().exists() && !temp.getParentFile().mkdirs()) throw new IOException("Failed to create temp folder!");
+
+                if (!temp.createNewFile()) throw new IOException("Failed to create temp file!");
 
                 BufferedWriter writer = new BufferedWriter(new FileWriter(temp));
-                BufferedReader reader = new BufferedReader(new InputStreamReader(new URL(plugin.lang().replace("lang-pld", lang)).openStream()));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(URI.create(plugin.lang().replace("lang-pld", lang)).toURL().openStream()));
 
                 String ln;
                 while ((ln = reader.readLine()) != null) {
@@ -95,7 +82,7 @@ public class Lang {
                 }
                 writer.close();
                 map.putAll(load(temp));
-                temp.delete();
+                Files.delete(temp.toPath());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -104,13 +91,27 @@ public class Lang {
         return map;
     }
 
-    public static void save(File file, Map<String, String> map) {
+    private static void writeToFile(NexusPlugin plugin, File langFile) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(langFile));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(URI.create(plugin.lang().replace("lang-pld", "en")).toURL().openStream()));
 
+        String ln;
+        while ((ln = reader.readLine()) != null) {
+            writer.write(ln);
+            writer.newLine();
+        }
+        writer.close();
+    }
+
+    public static void save(File file, Map<String, String> map) throws IOException {
+        JSONObject obj = new JSONObject();
+        map.forEach(obj::put);
+        Files.writeString(file.toPath(), obj.toString(2));
     }
 
     public static Boolean folderExists(String lang) {
         try {
-            URL url = new URL("https://synkdev.cc/storage/translations/"+lang);
+            URL url = URI.create("https://synkdev.cc/storage/translations/"+lang).toURL();
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("HEAD");
             conn.setConnectTimeout(5000);
@@ -124,6 +125,7 @@ public class Lang {
     public static Map<String, String> load(File file) {
         Gson gson = new Gson();
         try (FileReader reader = new FileReader(file)) {
+            //noinspection unchecked
             return new HashMap<String, String>(gson.fromJson(reader, HashMap.class));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -135,13 +137,11 @@ public class Lang {
             for (int i = 0; i < placeholders.length; i++) {
                 translatedString = translatedString.replace("%s" + (i + 1) + "%", placeholders[i]);
             }
-        } catch (Exception ignored) {
+        } catch (Exception _) {
+            // Ignore any exceptions that may occur during placeholder replacement
         }
         if (translatedString.equals("Invalid translation!")) Utils.debug("Invalid translation for key "+key);
         return translatedString;
     }
 
-    public String removeEnds(String s) {
-        return s.split("\"")[0];
-    }
 }

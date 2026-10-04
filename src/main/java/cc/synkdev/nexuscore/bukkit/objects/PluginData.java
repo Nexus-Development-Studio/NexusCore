@@ -1,6 +1,6 @@
-package cc.synkdev.nexusCore.bukkit.objects;
+package cc.synkdev.nexuscore.bukkit.objects;
 
-import cc.synkdev.nexusCore.components.PluginUpdate;
+import cc.synkdev.nexuscore.components.PluginUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

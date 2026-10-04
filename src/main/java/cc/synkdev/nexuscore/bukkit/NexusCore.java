@@ -1,10 +1,10 @@
-package cc.synkdev.nexusCore.bukkit;
+package cc.synkdev.nexuscore.bukkit;
 
-import cc.synkdev.nexusCore.bukkit.commands.NcCmd;
-import cc.synkdev.nexusCore.bukkit.commands.ReportCmd;
-import cc.synkdev.nexusCore.bukkit.objects.PluginData;
-import cc.synkdev.nexusCore.components.NexusPlugin;
-import cc.synkdev.nexusCore.components.folia.NexusScheduler;
+import cc.synkdev.nexuscore.bukkit.commands.NcCmd;
+import cc.synkdev.nexuscore.bukkit.commands.ReportCmd;
+import cc.synkdev.nexuscore.bukkit.objects.PluginData;
+import cc.synkdev.nexuscore.components.NexusPlugin;
+import cc.synkdev.nexuscore.components.folia.NexusScheduler;
 import co.aikar.commands.BukkitCommandManager;
 import dev.faststats.ErrorTracker;
 import dev.faststats.bukkit.BukkitContext;
@@ -21,7 +21,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.*;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -29,18 +28,16 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
     @Getter private static NexusCore instance;
     @Setter String prefix = ChatColor.translateAlternateColorCodes('&', "&8[&6NexusCore&8] » &r");
     @Setter @Getter static NexusPlugin pl = null;
-    public static Map<NexusPlugin, String> availableUpdates = new HashMap<>();
+    static final Map<NexusPlugin, String> availableUpdates = new HashMap<>();
     private final File configFile = new File(getDataFolder(), "config.yml");
     public FileConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-    public static String lang = "en";
+    public static String language = "en";
     @Getter @Setter private static Boolean loopReport = false;
-    public static Map<String, String> langMap = new HashMap<>();
-    public List<PluginData> outdated = new ArrayList<>();
-    public Boolean doAnalytics = true;
+    private static final Map<String, String> localLangMap = new HashMap<>();
+    public final List<PluginData> outdated = new ArrayList<>();
     public Boolean doAutoUpdate = true;
-    public UUID serverUUID;
     @Getter @Setter private List<String> plugins = new ArrayList<>();
-    public Map<String, String> versions = new HashMap<>();
+    public final Map<String, String> versions = new HashMap<>();
     public boolean debug = false;
 
     public static final ErrorTracker ERROR_TRACKER = ErrorTracker.contextAware();
@@ -56,8 +53,8 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
     public void onEnable() {
         loadConfig();
 
-        langMap.clear();
-        langMap.putAll(Lang.init(this, new File(getDataFolder(), "lang.json")));
+        localLangMap.clear();
+        localLangMap.putAll(Lang.init(this, new File(getDataFolder(), "lang.json"), language));
 
         BukkitCommandManager pcm = new BukkitCommandManager(this);
 
@@ -107,20 +104,28 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
     public void loadConfig() {
         try {
             File slFolder = new File(getDataFolder().getParentFile(), "SynkLibs");
-            if (slFolder.exists()) {
-                slFolder.renameTo(getDataFolder());
-            }
+            if (slFolder.exists() && !slFolder.renameTo(getDataFolder())) {
+                    throw new IOException("Failed to rename SynkLibs folder to NexusCore!");
+                }
+
             File slJar = new File(getDataFolder().getParentFile(), "SynkLibs.jar");
-            if (slJar.exists()) slJar.renameTo(new File(getDataFolder().getParentFile(), "NexusCore.jar"));
+            if (slJar.exists()) {
+                if (slJar.renameTo(new File(getDataFolder().getParentFile(), "NexusCore.jar"))) {
+                    Utils.log("&bRenamed SynkLibs.jar to NexusCore.jar", true);
+                } else {
+                    Utils.log("&cFailed to rename SynkLibs.jar to NexusCore.jar", false);
+                }
+            }
 
             if (!configFile.getParentFile().exists()) configFile.getParentFile().mkdirs();
-            if (!configFile.exists()) {
-                configFile.createNewFile();
-            }
+            if (!configFile.exists() && !configFile.createNewFile()) {
+                    throw new IOException("Failed to create config.yml file!");
+                }
+
 
             config = YamlConfiguration.loadConfiguration(configFile);
             config = Utils.loadWebConfig("https://synkdev.cc/storage/config-libs.php", configFile);
-            lang = config.getString("lang");
+            language = config.getString("lang");
             doAutoUpdate = config.getBoolean("autoupdate");
             debug = config.contains("debug") && config.getBoolean("debug");
         } catch (IOException e) {
@@ -161,6 +166,6 @@ public final class NexusCore extends JavaPlugin implements NexusPlugin {
 
     @Override
     public Map<String, String> langMap() {
-        return langMap;
+        return localLangMap;
     }
 }

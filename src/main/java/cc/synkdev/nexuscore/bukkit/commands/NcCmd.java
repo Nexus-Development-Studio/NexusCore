@@ -1,9 +1,9 @@
-package cc.synkdev.nexusCore.bukkit.commands;
+package cc.synkdev.nexuscore.bukkit.commands;
 
 
-import cc.synkdev.nexusCore.bukkit.Lang;
-import cc.synkdev.nexusCore.bukkit.NexusCore;
-import cc.synkdev.nexusCore.bukkit.UpdateChecker;
+import cc.synkdev.nexuscore.bukkit.Lang;
+import cc.synkdev.nexuscore.bukkit.NexusCore;
+import cc.synkdev.nexuscore.bukkit.UpdateChecker;
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.CommandAlias;
 import co.aikar.commands.annotation.CommandPermission;
@@ -14,6 +14,7 @@ import org.bukkit.command.CommandSender;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 
@@ -43,11 +44,10 @@ public class NcCmd extends BaseCommand {
 
     public static String getPublicIp() {
         try {
-            URL url = new URL("https://api.ipify.org");
+            URL url = URI.create("https://api.ipify.org").toURL();
             BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
             return br.readLine();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception _) {
             return "Unknown";
         }
     }
@@ -72,27 +72,27 @@ public class NcCmd extends BaseCommand {
         String uuid = args[0];
         String ip = getPublicIp();
         try {
-            HttpURLConnection conn = (HttpURLConnection) new URL("https://analytics.synkdev.cc/api/support/verify?uuid="+uuid+"&ip="+ip).openConnection();
+            HttpURLConnection conn = (HttpURLConnection) URI.create("https://analytics.synkdev.cc/api/support/verify?uuid="+uuid+"&ip="+ip).toURL().openConnection();
             conn.setRequestMethod("GET");
             conn.setDoOutput(true);
 
             int code = conn.getResponseCode();
             if (code != 200) {
                 switch (code){
-                    case 500:
-                        sender.sendMessage(core.prefix()+Lang.translate("support500", core));
-                        break;
                     case 403:
                         sender.sendMessage(core.prefix()+Lang.translate("support403", core));
                         break;
                     case 401:
                         sender.sendMessage(core.prefix()+Lang.translate("support401", core));
                         break;
+                    default:
+                        sender.sendMessage(core.prefix()+Lang.translate("support500", core));
+                        break;
                 }
                 return;
             }
 
-            conn = (HttpURLConnection) new URL("https://analytics.synkdev.cc/api/support/download?uuid="+uuid+"&ip="+ip).openConnection();
+            conn = (HttpURLConnection) URI.create("https://analytics.synkdev.cc/api/support/download?uuid="+uuid+"&ip="+ip).toURL().openConnection();
             conn.setRequestMethod("GET");
             conn.setDoOutput(true);
 
@@ -132,7 +132,7 @@ public class NcCmd extends BaseCommand {
         BufferedReader reader = new BufferedReader(new FileReader(codeFile));
         String uuid = reader.readLine();
         reader.close();
-        HttpURLConnection conn = (HttpURLConnection) new URL("https://analytics.synkdev.cc/api/support/finish?uuid="+uuid+"&ip="+getPublicIp()).openConnection();
+        HttpURLConnection conn = (HttpURLConnection) URI.create("https://analytics.synkdev.cc/api/support/finish?uuid="+uuid+"&ip="+getPublicIp()).toURL().openConnection();
         conn.setRequestMethod("GET");
         int code = conn.getResponseCode();
         if (code == 403) {
@@ -141,8 +141,8 @@ public class NcCmd extends BaseCommand {
             sender.sendMessage(core.prefix()+Lang.translate("supportFinishError", core));
         }
 
-       codeFile.delete();
-       new File(core.getDataFolder().getParentFile(), "RemoteSupportNexus.jar").delete();
+       Files.delete(codeFile.toPath());
+       Files.delete(new File(core.getDataFolder().getParentFile(), "RemoteSupportNexus.jar").toPath());
 
        sender.sendMessage(core.prefix()+Lang.translate("supportFinish", core));
     }

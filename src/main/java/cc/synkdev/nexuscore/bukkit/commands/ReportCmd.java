@@ -1,7 +1,7 @@
-package cc.synkdev.nexusCore.bukkit.commands;
+package cc.synkdev.nexuscore.bukkit.commands;
 
-import cc.synkdev.nexusCore.bukkit.NexusCore;
-import cc.synkdev.nexusCore.components.folia.Platform;
+import cc.synkdev.nexuscore.bukkit.NexusCore;
+import cc.synkdev.nexuscore.components.folia.Platform;
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.CommandAlias;
 import co.aikar.commands.annotation.CommandPermission;
@@ -17,12 +17,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.jspecify.annotations.NonNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 
 @CommandAlias("ncreport|ncdump|nexuscorereport|nexuscoredump")
@@ -38,14 +40,10 @@ public class ReportCmd extends BaseCommand {
     public void onReport(CommandSender sender) {
     String uuid = send();
     if (uuid != null) {
-            TextComponent comp = new TextComponent(core.prefix() + ChatColor.GREEN + "Your report has been exported!\n"+core.prefix()+ChatColor.GREEN+"Please save this link somewhere as it will be used by the support team: " + ChatColor.GOLD);
-            TextComponent uuidComp = new TextComponent(ChatColor.GOLD+"https://synkdev.cc/dump/"+uuid);
-            comp.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://synkdev.cc/dump/"+uuid));
-            comp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("Click to copy or open it")}));
-            comp.addExtra(uuidComp);
+        TextComponent comp = createComp(uuid);
 
-            if (sender instanceof Player) {
-                ((Player) sender).spigot().sendMessage(comp);
+        if (sender instanceof Player player) {
+                player.spigot().sendMessage(comp);
             } else {
                 sender.sendMessage(core.prefix() + ChatColor.GREEN + "Your report has been exported!\n" + core.prefix() + ChatColor.GREEN + "Please save this URL somewhere as it will be used by the support team: " + ChatColor.GOLD + "https://synkdev.cc/dump/"+uuid);
             }
@@ -54,9 +52,18 @@ public class ReportCmd extends BaseCommand {
         }
     }
 
+    private @NonNull TextComponent createComp(String uuid) {
+        TextComponent comp = new TextComponent(core.prefix() + ChatColor.GREEN + "Your report has been exported!\n"+core.prefix()+ChatColor.GREEN+"Please save this link somewhere as it will be used by the support team: " + ChatColor.GOLD);
+        TextComponent uuidComp = new TextComponent(ChatColor.GOLD+"https://synkdev.cc/dump/"+ uuid);
+        comp.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://synkdev.cc/dump/"+ uuid));
+        comp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("Click to copy or open it")}));
+        comp.addExtra(uuidComp);
+        return comp;
+    }
+
     public String send() {
         try {
-            URL url = new URL("https://dump.synkdev.cc/upload");
+            URL url = URI.create("https://dump.synkdev.cc/upload").toURL();
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);

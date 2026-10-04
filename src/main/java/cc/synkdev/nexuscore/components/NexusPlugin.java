@@ -1,4 +1,4 @@
-package cc.synkdev.nexusCore.components;
+package cc.synkdev.nexuscore.components;
 
 import java.util.Map;
 

@@ -1,6 +1,6 @@
 name: NexusCore
 version: '${project.version}'
-main: cc.synkdev.nexusCore.bukkit.NexusCore
+main: cc.synkdev.nexuscore.bukkit.NexusCore
 api-version: '1.18'
 authors: [ Synk ]
 folia-supported: true
