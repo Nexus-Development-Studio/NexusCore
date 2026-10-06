@@ -45,7 +45,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          TAG="v${VERSION}"
+          TAG="${VERSION}"
 
           shopt -s nullglob
           FILES=()
