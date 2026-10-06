@@ -3,5 +3,10 @@ jdk:
 before_install:
   - sdk install maven 3.9.9
   - sdk use maven 3.9.9
+  - which mvn
+  - echo "MAVEN_HOME=$MAVEN_HOME M2_HOME=$M2_HOME"
+  - ls -la "$HOME/.sdkman/candidates/maven/3.9.9/boot"
+  - ls -la .mvn || true
 install:
+  - mvn -v
   - mvn clean install -DskipTests
