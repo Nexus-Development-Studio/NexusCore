@@ -6,7 +6,7 @@
 
     <groupId>cc.synkdev</groupId>
     <artifactId>NexusCore</artifactId>
-    <version>2.1.5.3-DEV</version>
+    <version>2.1.5.4-DEV</version>
     <packaging>jar</packaging>
 
     <name>NexusCore</name>
@@ -118,6 +118,10 @@
             <id>faststats-releases</id>
             <url>https://repo.faststats.dev/releases</url>
         </repository>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/Nexus-Development-Studio/NexusGUI</url>
+        </repository>
     </repositories>
 
     <dependencyManagement>
@@ -167,8 +171,8 @@
 
         <dependency>
             <groupId>cc.synkdev.gui</groupId>
-            <artifactId>NexusGUI</artifactId>
-            <version>1.2</version>
+            <artifactId>nexusgui</artifactId>
+            <version>1.2.1.6-DEV</version>
         </dependency>
 
         <dependency>
