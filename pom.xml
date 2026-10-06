@@ -6,7 +6,7 @@
 
     <groupId>cc.synkdev</groupId>
     <artifactId>NexusCore</artifactId>
-    <version>2.1.5.1-DEV</version>
+    <version>2.1.5.2-DEV</version>
     <packaging>jar</packaging>
 
     <name>NexusCore</name>
