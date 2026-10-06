@@ -6,7 +6,7 @@
 
     <groupId>cc.synkdev</groupId>
     <artifactId>NexusCore</artifactId>
-    <version>2.1.6</version>
+    <version>2.1.6.1</version>
     <packaging>jar</packaging>
 
     <name>NexusCore</name>
@@ -173,7 +173,6 @@
             <groupId>com.github.Nexus-Development-Studio</groupId>
             <artifactId>NexusGUI</artifactId>
             <version>1.2.2</version>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
