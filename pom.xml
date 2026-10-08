@@ -6,7 +6,7 @@
 
     <groupId>cc.synkdev</groupId>
     <artifactId>NexusCore</artifactId>
-    <version>2.1.7</version>
+    <version>2.1.8</version>
     <packaging>jar</packaging>
 
     <name>NexusCore</name>
@@ -68,6 +68,10 @@
                         <relocation>
                             <pattern>net.kyori</pattern>
                             <shadedPattern>cc.synkdev.kyori</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>net.wesjd.anvilgui</pattern>
+                            <shadedPattern>cc.synkdev.anvilgui</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>
