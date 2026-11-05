@@ -47,7 +47,7 @@ public class UpdateChecker {
         List<Plugin> synkPlugs = new ArrayList<>();
         core.getPlugins().clear();
         for (Plugin pl : Bukkit.getPluginManager().getPlugins()) {
-            if (pl.getDescription().getAuthors().contains("Synk") || pl.getDescription().getAuthors().contains("Riddles")) {
+            if (pl.getDescription().getAuthors().contains("Synk") || pl.getDescription().getAuthors().contains("NDS") || pl.getDescription().getAuthors().contains("Nexus Development Studio")) {
                 synkPlugs.add(pl);
                 if (!core.versions.containsKey(pl.getName())) core.versions.put(pl.getName(), pl.getDescription().getVersion());
                 core.getPlugins().add(pl.getDescription().getName());
